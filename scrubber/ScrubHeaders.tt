@@ -67,6 +67,34 @@ int main()
 )";
 	}
 
+	constexpr std::array propTypeMacros {
+<#
+	var propTypeMacros = headers
+		.Select(file => GetPropTypeMacros(file))
+		.Aggregate((first, second) => first.Concat(second))
+		.Distinct();
+
+	foreach (var macro in propTypeMacros)
+	{
+#>
+		std::make_pair("<#= macro #>"sv, static_cast<std::uint16_t>(<#= macro #>)),
+<#
+	}
+#>
+	};
+
+	for (const auto& entry : propTypeMacros)
+	{
+		std::cout << R"(
+#ifdef )" << entry.first << R"(
+#undef )" << entry.first << R"(
+#define )" << entry.first << R"( (0x)"
+			<< std::hex << std::setfill('0') << std::uppercase << std::setw(4)
+			<< entry.second << R"()
+#endif // )" << entry.first << R"(
+)";
+	}
+
 	constexpr std::array propTagMacros {
 <#
 	var propTagMacros = headers
@@ -116,7 +144,7 @@ int main()
 			@"PR_CONVERSION_STATE",
 			@"PR_HTML",
 		};
-		var pattern = new Regex(@"^\s*#define\s+(\S+)\s+PROP_TAG\(.+,.+\)\s*$");
+		var pattern = new Regex(@"^\s*#define\s+(\S+)\s+PROP_TAG\(.+,.+\)");
 		var path = Path.Combine("../include/", file);
 		return File.ReadAllLines(path)
 			.Select(line => pattern.Match(line))
@@ -127,7 +155,17 @@ int main()
 
 	private static IEnumerable<string> GetMapiCodeMacros(string file)
 	{
-		var pattern = new Regex(@"^\s*#define\s+(\S+)\s+MAKE_MAPI_[ES]\(.+\)\s*$");
+		var pattern = new Regex(@"^\s*#define\s+(\S+)\s+MAKE_MAPI_[ES]\(.+\)");
+		var path = Path.Combine("../include/", file);
+		return File.ReadAllLines(path)
+			.Select(line => pattern.Match(line))
+			.Where(match => match.Success)
+			.Select(match => match.Groups[1].Value);
+	}
+
+	private static IEnumerable<string> GetPropTypeMacros(string file)
+	{
+		var pattern = new Regex(@"^\s*#define\s+(PT_\S+)\s+\(.+\)");
 		var path = Path.Combine("../include/", file);
 		return File.ReadAllLines(path)
 			.Select(line => pattern.Match(line))
