@@ -205,7 +205,7 @@ int main()
 
 	private static IEnumerable<string> GetOtherLongMacros(string file, HashSet<string> propTypeMacros)
 	{
-		var pattern = new Regex(@"^\s*#define\s+([^(\s]+)\s+\(\s*\(U?LONG\).+\)");
+		var pattern = new Regex(@"^\s*#define\s+([^(\s]+)\s+\(\s*\((:?U?LONG|BOOKMARK)\).+\)");
 		var path = Path.Combine("../include/", file);
 		return File.ReadAllLines(path)
 			.Select(line => pattern.Match(line))
