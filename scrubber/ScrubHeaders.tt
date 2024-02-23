@@ -49,7 +49,7 @@ int main()
 	foreach (var macro in mapiCodeMacros)
 	{
 #>
-		std::make_pair("<#= macro #>"sv, <#= macro #>),
+		std::make_pair("<#= macro #>"sv, static_cast<std::uint32_t>(<#= macro #>)),
 <#
 	}
 #>
@@ -77,7 +77,7 @@ int main()
 	foreach (var macro in propTagMacros)
 	{
 #>
-		std::make_pair("<#= macro #>"sv, <#= macro #>),
+		std::make_pair("<#= macro #>"sv, static_cast<std::uint32_t>(<#= macro #>)),
 <#
 	}
 #>
