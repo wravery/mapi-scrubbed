@@ -6,6 +6,15 @@
 <#@ import namespace="System.Text.RegularExpressions" #>
 <#@ assembly name="System.Linq" #>
 <#@ assembly name="System.Text.RegularExpressions" #>
+
+#include <array>
+#include <cstdint>
+#include <iomanip>
+#include <ios>
+#include <iostream>
+#include <string>
+#include <string_view>
+
 <#
 	var headers = GetHeaders();
 
@@ -14,19 +23,77 @@
 #>#include "<#= file #>"
 <#
 	}
-
-	#>
+#>
 
 int main()
 {
+	using namespace std::literals;
+
+	std::cout << R"(<#
+	foreach (var file in headers)
+	{
+#>
+#include "<#= file #>"
+<#
+	}
+#>
+)";
+
+	constexpr std::array propTagMacros {
+<#
+	var macros = headers
+		.Select(file => GetPropTagMacros(file))
+		.Aggregate((first, second) => first.Concat(second))
+		.Distinct();
+
+	foreach (var macro in macros)
+	{
+#>
+		std::make_pair("<#= macro #>"sv, <#= macro #>),
+<#
+	}
+#>
+	};
+
+	for (const auto& entry : propTagMacros)
+	{
+		std::cout << R"(
+#ifdef )" << entry.first << R"(
+#undef )" << entry.first << R"(
+#define )" << entry.first << R"( (0x)"
+			<< std::hex << std::setfill('0') << std::uppercase << std::setw(8)
+			<< entry.second << R"()
+#endif // )" << entry.first << R"(
+)";
+	}
+
+	std::cout << std::endl;
+
 	return 0;
 }
 
 <#+
 	private static string[] GetHeaders()
 	{
-		return Directory.EnumerateFiles("../include", "*.h")
+		return Directory.EnumerateFiles("../include/", "*.h")
 			.Select(file => Path.GetFileName(file))
 			.ToArray();
+	}
+
+	private static IEnumerable<string> GetPropTagMacros(string file)
+	{
+		var missing = new HashSet<string> {
+			@"PR_USER_SID",
+			@"PR_DOTSTUFF_STATE",
+			@"PR_CONVERSION_STATE",
+			@"PR_HTML",
+		};
+		var pattern = new Regex(@"^\s*#define\s+(\S+)\s+PROP_TAG\(.+,.+\)\s*$");
+		var path = Path.Combine("../include/", file);
+		return File.ReadAllLines(path)
+			.Select(line => pattern.Match(line))
+			.Where(match => match.Success)
+			.Select(match => match.Groups[1].Value)
+			.Where(macro => !missing.Contains(macro));
 	}
 #>

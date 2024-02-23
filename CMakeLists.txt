@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.17.1)
 project(mapi-scrubbed)
 
+set(CMAKE_CXX_STANDARD 20)
+
 # Fetch the https://github.com/microsoft/MAPIStubLibrary repository.
 include(FetchContent)
 FetchContent_Declare(MAPIStubLibrary
