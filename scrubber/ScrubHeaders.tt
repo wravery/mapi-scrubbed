@@ -1,0 +1,32 @@
+<#@ template language="C#" #>
+<#@ output extension=".cpp" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text.RegularExpressions" #>
+<#@ assembly name="System.Linq" #>
+<#@ assembly name="System.Text.RegularExpressions" #>
+<#
+	var headers = GetHeaders();
+
+	foreach (var file in headers)
+	{
+#>#include "<#= file #>"
+<#
+	}
+
+	#>
+
+int main()
+{
+	return 0;
+}
+
+<#+
+	private static string[] GetHeaders()
+	{
+		return Directory.EnumerateFiles("../include", "*.h")
+			.Select(file => Path.GetFileName(file))
+			.ToArray();
+	}
+#>
