@@ -1,3 +1,5 @@
+// Include all of the original MAPI headers. This file should be a drop-in replacement.
+
 #include "abhelp.h"
 #include "actMgmt.h"
 #include "EdkGuid.h"
@@ -25,6 +27,10 @@
 #include "MAPIX.h"
 #include "mimeole.h"
 #include "MSPST.h"
+
+// Redefine all of the macros we found in a simplified form that matches the regular expressions in
+// https://github.com/microsoft/win32metadata. To keep C++ code in sync with the preprocessor flags
+// used to generate this file, you should include this header instead of the original MAPI headers.
 
 #ifdef MAPI_E_NO_SUPPORT
 #undef MAPI_E_NO_SUPPORT
@@ -14985,4 +14991,3 @@
 #undef TYPEDID_MASK
 #define TYPEDID_MASK (0x0000FFFF)
 #endif // TYPEDID_MASK
-

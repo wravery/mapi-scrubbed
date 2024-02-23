@@ -26,11 +26,39 @@
 	}
 #>
 
+void outputCode(std::string_view name, std::uint32_t code)
+{
+	std::cout << R"(
+
+#ifdef )" << name << R"(
+#undef )" << name << R"(
+#define )" << name << R"( ((HRESULT)0x)"
+		<< std::hex << std::setfill('0') << std::uppercase << std::setw(8)
+		<< code << R"()
+#endif // )" << name;
+}
+
+void outputConst(std::string_view name, auto value)
+{
+	constexpr auto width = sizeof(value) * 2;
+
+	std::cout << R"(
+
+#ifdef )" << name << R"(
+#undef )" << name << R"(
+#define )" << name << R"( (0x)"
+		<< std::hex << std::setfill('0') << std::uppercase << std::setw(width)
+		<< value << R"()
+#endif // )" << name;
+}
+
 int main()
 {
 	using namespace std::literals;
 
-	std::cout << R"(<#
+	std::cout << R"(// Include all of the original MAPI headers. This file should be a drop-in replacement.
+
+<#
 	foreach (var file in headers)
 	{
 #>
@@ -38,7 +66,10 @@ int main()
 <#
 	}
 #>
-)";
+
+// Redefine all of the macros we found in a simplified form that matches the regular expressions in
+// https://github.com/microsoft/win32metadata. To keep C++ code in sync with the preprocessor flags
+// used to generate this file, you should include this header instead of the original MAPI headers.)";
 
 	constexpr std::array mapiCodeMacros {
 <#
@@ -58,14 +89,7 @@ int main()
 
 	for (const auto& entry : mapiCodeMacros)
 	{
-		std::cout << R"(
-#ifdef )" << entry.first << R"(
-#undef )" << entry.first << R"(
-#define )" << entry.first << R"( ((HRESULT)0x)"
-			<< std::hex << std::setfill('0') << std::uppercase << std::setw(8)
-			<< entry.second << R"()
-#endif // )" << entry.first << R"(
-)";
+		outputCode(entry.first, entry.second);
 	}
 
 	constexpr std::array propTypeMacros {
@@ -86,14 +110,7 @@ int main()
 
 	for (const auto& entry : propTypeMacros)
 	{
-		std::cout << R"(
-#ifdef )" << entry.first << R"(
-#undef )" << entry.first << R"(
-#define )" << entry.first << R"( (0x)"
-			<< std::hex << std::setfill('0') << std::uppercase << std::setw(4)
-			<< entry.second << R"()
-#endif // )" << entry.first << R"(
-)";
+		outputConst(entry.first, entry.second);
 	}
 
 	constexpr std::array propTagMacros {
@@ -114,14 +131,7 @@ int main()
 
 	for (const auto& entry : propTagMacros)
 	{
-		std::cout << R"(
-#ifdef )" << entry.first << R"(
-#undef )" << entry.first << R"(
-#define )" << entry.first << R"( (0x)"
-			<< std::hex << std::setfill('0') << std::uppercase << std::setw(8)
-			<< entry.second << R"()
-#endif // )" << entry.first << R"(
-)";
+		outputConst(entry.first, entry.second);
 	}
 
 	constexpr std::array otherLongMacros {
@@ -143,14 +153,7 @@ int main()
 
 	for (const auto& entry : otherLongMacros)
 	{
-		std::cout << R"(
-#ifdef )" << entry.first << R"(
-#undef )" << entry.first << R"(
-#define )" << entry.first << R"( (0x)"
-			<< std::hex << std::setfill('0') << std::uppercase << std::setw(8)
-			<< entry.second << R"()
-#endif // )" << entry.first << R"(
-)";
+		outputConst(entry.first, entry.second);
 	}
 
 	std::cout << std::endl;
