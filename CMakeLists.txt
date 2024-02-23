@@ -25,3 +25,7 @@ else()
 endif()
 
 add_subdirectory(${mapistublibrary_SOURCE_DIR}/scrubber ${mapistublibrary_BINARY_DIR})
+
+add_library(testbuild STATIC testbuild.cpp)
+target_include_directories(testbuild PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_dependencies(testbuild copyheaders)
