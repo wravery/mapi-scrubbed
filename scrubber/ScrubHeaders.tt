@@ -4,6 +4,7 @@
 <#@ import namespace="System.IO" #>
 <#@ import namespace="System.Linq" #>
 <#@ import namespace="System.Text.RegularExpressions" #>
+<#@ assembly name="System.Collections" #>
 <#@ assembly name="System.Linq" #>
 <#@ assembly name="System.Text.RegularExpressions" #>
 
@@ -123,6 +124,35 @@ int main()
 )";
 	}
 
+	constexpr std::array otherLongMacros {
+<#
+	var propTypeMacrosSet = propTypeMacros.ToHashSet();
+	var otherLongMacros = headers
+		.Select(file => GetOtherLongMacros(file, propTypeMacrosSet))
+		.Aggregate((first, second) => first.Concat(second))
+		.Distinct();
+
+	foreach (var macro in otherLongMacros)
+	{
+#>
+		std::make_pair("<#= macro #>"sv, static_cast<std::uint32_t>(<#= macro #>)),
+<#
+	}
+#>
+	};
+
+	for (const auto& entry : otherLongMacros)
+	{
+		std::cout << R"(
+#ifdef )" << entry.first << R"(
+#undef )" << entry.first << R"(
+#define )" << entry.first << R"( (0x)"
+			<< std::hex << std::setfill('0') << std::uppercase << std::setw(8)
+			<< entry.second << R"()
+#endif // )" << entry.first << R"(
+)";
+	}
+
 	std::cout << std::endl;
 
 	return 0;
@@ -144,7 +174,7 @@ int main()
 			@"PR_CONVERSION_STATE",
 			@"PR_HTML",
 		};
-		var pattern = new Regex(@"^\s*#define\s+(\S+)\s+PROP_TAG\(.+,.+\)");
+		var pattern = new Regex(@"^\s*#define\s+([^(\s]+)\s+PROP_TAG\(.+,.+\)");
 		var path = Path.Combine("../include/", file);
 		return File.ReadAllLines(path)
 			.Select(line => pattern.Match(line))
@@ -155,7 +185,7 @@ int main()
 
 	private static IEnumerable<string> GetMapiCodeMacros(string file)
 	{
-		var pattern = new Regex(@"^\s*#define\s+(\S+)\s+MAKE_MAPI_[ES]\(.+\)");
+		var pattern = new Regex(@"^\s*#define\s+([^(\s]+)\s+MAKE_MAPI_[ES]\(.+\)");
 		var path = Path.Combine("../include/", file);
 		return File.ReadAllLines(path)
 			.Select(line => pattern.Match(line))
@@ -165,11 +195,22 @@ int main()
 
 	private static IEnumerable<string> GetPropTypeMacros(string file)
 	{
-		var pattern = new Regex(@"^\s*#define\s+(PT_\S+)\s+\(.+\)");
+		var pattern = new Regex(@"^\s*#define\s+(PT_[^(\s]+)\s+\(.+\)");
 		var path = Path.Combine("../include/", file);
 		return File.ReadAllLines(path)
 			.Select(line => pattern.Match(line))
 			.Where(match => match.Success)
 			.Select(match => match.Groups[1].Value);
+	}
+
+	private static IEnumerable<string> GetOtherLongMacros(string file, HashSet<string> propTypeMacros)
+	{
+		var pattern = new Regex(@"^\s*#define\s+([^(\s]+)\s+\(\s*\(U?LONG\).+\)");
+		var path = Path.Combine("../include/", file);
+		return File.ReadAllLines(path)
+			.Select(line => pattern.Match(line))
+			.Where(match => match.Success)
+			.Select(match => match.Groups[1].Value)
+			.Where(macro => !propTypeMacros.Contains(macro));
 	}
 #>
