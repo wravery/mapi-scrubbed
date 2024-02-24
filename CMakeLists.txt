@@ -13,19 +13,17 @@ FetchContent_GetProperties(MAPIStubLibrary)
 
 if(NOT mapistublibrary_POPULATED)
   FetchContent_Populate(MAPIStubLibrary)
-  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/scrubber DESTINATION ${mapistublibrary_SOURCE_DIR})
-else()
-  file(GLOB SCRUBBER_SOURCES LIST_DIRECTORIES false RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/scrubber/" "${CMAKE_CURRENT_SOURCE_DIR}/scrubber/*")
-  foreach(SOURCE ${SCRUBBER_SOURCES})
-    file(COPY_FILE
-        ${CMAKE_CURRENT_SOURCE_DIR}/scrubber/${SOURCE}
-        ${mapistublibrary_SOURCE_DIR}/scrubber/${SOURCE}
-      ONLY_IF_DIFFERENT)
-  endforeach()
 endif()
 
-add_subdirectory(${mapistublibrary_SOURCE_DIR}/scrubber ${mapistublibrary_BINARY_DIR})
+add_subdirectory(scrubber ${mapistublibrary_BINARY_DIR})
+
+file(GLOB MAPI_HEADERS LIST_DIRECTORIES false "${mapistublibrary_SOURCE_DIR}/include/*.h")
+add_custom_command(OUTPUT copied_headers
+	COMMAND cmake -E copy_if_different ${MAPI_HEADERS} ${CMAKE_CURRENT_SOURCE_DIR}/include
+	COMMAND cmake -E touch copied_headers
+	DEPENDS scrubconstants)
+add_custom_target(copyheaders ALL DEPENDS copied_headers)
 
 add_library(testbuild STATIC testbuild.cpp)
-target_include_directories(testbuild PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_dependencies(testbuild copyheaders)
+target_include_directories(testbuild PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)

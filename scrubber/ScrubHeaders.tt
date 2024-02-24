@@ -164,7 +164,7 @@ int main()
 <#+
 	private static string[] GetHeaders()
 	{
-		return Directory.EnumerateFiles("../include/", "*.h")
+		return Directory.EnumerateFiles("./", "*.h")
 			.Select(file => Path.GetFileName(file))
 			.ToArray();
 	}
@@ -178,7 +178,7 @@ int main()
 			@"PR_HTML",
 		};
 		var pattern = new Regex(@"^\s*#define\s+([^(\s]+)\s+PROP_TAG\(.+,.+\)");
-		var path = Path.Combine("../include/", file);
+		var path = Path.Combine("./", file);
 		return File.ReadAllLines(path)
 			.Select(line => pattern.Match(line))
 			.Where(match => match.Success)
@@ -189,7 +189,7 @@ int main()
 	private static IEnumerable<string> GetMapiCodeMacros(string file)
 	{
 		var pattern = new Regex(@"^\s*#define\s+([^(\s]+)\s+MAKE_MAPI_[ES]\(.+\)");
-		var path = Path.Combine("../include/", file);
+		var path = Path.Combine("./", file);
 		return File.ReadAllLines(path)
 			.Select(line => pattern.Match(line))
 			.Where(match => match.Success)
@@ -199,7 +199,7 @@ int main()
 	private static IEnumerable<string> GetPropTypeMacros(string file)
 	{
 		var pattern = new Regex(@"^\s*#define\s+(PT_[^(\s]+)\s+\(.+\)");
-		var path = Path.Combine("../include/", file);
+		var path = Path.Combine("./", file);
 		return File.ReadAllLines(path)
 			.Select(line => pattern.Match(line))
 			.Where(match => match.Success)
@@ -209,7 +209,7 @@ int main()
 	private static IEnumerable<string> GetOtherLongMacros(string file, HashSet<string> propTypeMacros)
 	{
 		var pattern = new Regex(@"^\s*#define\s+([^(\s]+)\s+\(\s*\((:?U?LONG|BOOKMARK)\).+\)");
-		var path = Path.Combine("../include/", file);
+		var path = Path.Combine("./", file);
 		return File.ReadAllLines(path)
 			.Select(line => pattern.Match(line))
 			.Where(match => match.Success)
