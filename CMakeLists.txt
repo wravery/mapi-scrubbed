@@ -27,3 +27,5 @@ add_custom_target(copyheaders ALL DEPENDS copied_headers)
 add_library(testbuild STATIC testbuild.cpp)
 add_dependencies(testbuild copyheaders)
 target_include_directories(testbuild PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+add_subdirectory(importlib)
