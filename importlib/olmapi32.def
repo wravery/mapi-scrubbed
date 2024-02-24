@@ -1,5 +1,8 @@
 LIBRARY OLMAPI32
 EXPORTS
+	DllCanUnloadNow PRIVATE
+	DllGetClassObject PRIVATE
+
 	AddOfflineFileToRegistry
 	AllowHxfVTPReports
 	AssertGuardedAPIAllowed
@@ -53,10 +56,6 @@ EXPORTS
 	DestroyStandardProgress
 	DetectCaptivePortal
 	DisplayOOF
-
-	DllCanUnloadNow PRIVATE
-	DllGetClassObject PRIVATE
-
 	DoDeliveryReport
 	DwDivFtDw
 	EDPIsSessionLocked
