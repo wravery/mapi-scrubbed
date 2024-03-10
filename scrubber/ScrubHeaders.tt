@@ -18,10 +18,51 @@
 
 <#
 	var headers = GetHeaders();
+	var oleGuidMacros = headers
+		.Select(file => new KeyValuePair<string, IEnumerable<string>>(file, GetOleGuidMacros(file)))
+		.Where(kvp => kvp.Value.Any())
+		.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
 	foreach (var file in headers)
 	{
-#>#include "<#= file #>"
+		if (!oleGuidMacros.ContainsKey(file))
+		{
+#>
+#include "<#= file #>"
+<#
+		}
+	}
+
+	if (oleGuidMacros.Any())
+	{
+		foreach (var file in oleGuidMacros)
+		{
+#>
+
+// <#= file.Key #>
+<#
+			foreach (var macro in file.Value)
+			{
+#>
+#define USES_<#= macro #>
+<#
+			}
+		}
+#>
+
+#define INITGUID
+#include <guiddef.h>
+
+<#
+		foreach (var file in oleGuidMacros)
+		{
+#>
+#include "<#= file.Key #>"
+<#
+		}
+#>
+
+#undef INITGUID
 <#
 	}
 #>
@@ -36,6 +77,29 @@ void outputCode(std::string_view name, std::uint32_t code)
 		<< std::hex << std::setfill('0') << std::uppercase << std::setw(8)
 		<< code << R"()
 #endif // )" << name;
+}
+
+void outputGuid(std::string_view name, const GUID& guid)
+{
+	std::cout << R"(
+
+#undef )" << name << R"(
+DEFINE_GUID()" << name << R"(, 0x)"
+		<< std::hex << std::setfill('0') << std::uppercase << std::setw(8)
+		<< static_cast<unsigned int>(guid.Data1) << R"(, 0x)"
+		<< std::hex << std::setfill('0') << std::uppercase << std::setw(4)
+		<< static_cast<unsigned int>(guid.Data2) << R"(, 0x)"
+		<< std::hex << std::setfill('0') << std::uppercase << std::setw(4)
+		<< static_cast<unsigned int>(guid.Data3);
+
+	for (const auto b : guid.Data4)
+	{
+		std::cout << R"(, 0x)"
+			<< std::hex << std::setfill('0') << std::uppercase << std::setw(2)
+			<< static_cast<unsigned int>(b);
+	}
+
+	std::cout << R"();)";
 }
 
 void outputConst(std::string_view name, auto value)
@@ -90,6 +154,25 @@ int main()
 	for (const auto& entry : mapiCodeMacros)
 	{
 		outputCode(entry.first, entry.second);
+	}
+
+	const std::array oleGuidMacros {
+<#
+	foreach (var file in oleGuidMacros)
+	{
+		foreach (var macro in file.Value)
+		{
+#>
+		std::make_pair("<#= macro #>"sv, <#= macro #>),
+<#
+		}
+	}
+#>
+	};
+
+	for (const auto& entry : oleGuidMacros)
+	{
+		outputGuid(entry.first, entry.second);
 	}
 
 	constexpr std::array propTypeMacros {
@@ -189,6 +272,16 @@ int main()
 	private static IEnumerable<string> GetMapiCodeMacros(string file)
 	{
 		var pattern = new Regex(@"^\s*#define\s+([^(\s]+)\s+MAKE_MAPI_[ES]\(.+\)");
+		var path = Path.Combine("./", file);
+		return File.ReadAllLines(path)
+			.Select(line => pattern.Match(line))
+			.Where(match => match.Success)
+			.Select(match => match.Groups[1].Value);
+	}
+
+	private static IEnumerable<string> GetOleGuidMacros(string file)
+	{
+		var pattern = new Regex(@"^\s*DEFINE_OLEGUID\(\s*([^\s,]+),\s*[^\s,]+,\s*[^\s,]+,\s*[^\s)]+\)");
 		var path = Path.Combine("./", file);
 		return File.ReadAllLines(path)
 			.Select(line => pattern.Match(line))
