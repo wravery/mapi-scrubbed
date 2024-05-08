@@ -32,6 +32,31 @@
 // https://github.com/microsoft/win32metadata. To keep C++ code in sync with the preprocessor flags
 // used to generate this file, you should include this header instead of the original MAPI headers.
 
+#ifdef MAPI_E_CALL_FAILED
+#undef MAPI_E_CALL_FAILED
+#define MAPI_E_CALL_FAILED ((HRESULT)0x80004005)
+#endif // MAPI_E_CALL_FAILED
+
+#ifdef MAPI_E_NOT_ENOUGH_MEMORY
+#undef MAPI_E_NOT_ENOUGH_MEMORY
+#define MAPI_E_NOT_ENOUGH_MEMORY ((HRESULT)0x8007000E)
+#endif // MAPI_E_NOT_ENOUGH_MEMORY
+
+#ifdef MAPI_E_INVALID_PARAMETER
+#undef MAPI_E_INVALID_PARAMETER
+#define MAPI_E_INVALID_PARAMETER ((HRESULT)0x80070057)
+#endif // MAPI_E_INVALID_PARAMETER
+
+#ifdef MAPI_E_INTERFACE_NOT_SUPPORTED
+#undef MAPI_E_INTERFACE_NOT_SUPPORTED
+#define MAPI_E_INTERFACE_NOT_SUPPORTED ((HRESULT)0x80004002)
+#endif // MAPI_E_INTERFACE_NOT_SUPPORTED
+
+#ifdef MAPI_E_NO_ACCESS
+#undef MAPI_E_NO_ACCESS
+#define MAPI_E_NO_ACCESS ((HRESULT)0x80070005)
+#endif // MAPI_E_NO_ACCESS
+
 #ifdef MAPI_E_NO_SUPPORT
 #undef MAPI_E_NO_SUPPORT
 #define MAPI_E_NO_SUPPORT ((HRESULT)0x80040102)

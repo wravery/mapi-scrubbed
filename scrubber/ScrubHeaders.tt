@@ -137,6 +137,18 @@ int main()
 
 	constexpr std::array mapiCodeMacros {
 <#
+	var mapiRenamedCodeMacros = headers
+		.Select(file => GetRenamedMapiCodeMacros(file))
+		.Aggregate((first, second) => first.Concat(second))
+		.Distinct();
+
+	foreach (var macro in mapiRenamedCodeMacros)
+	{
+#>
+		std::make_pair("<#= macro #>"sv, static_cast<std::uint32_t>(<#= macro #>)),
+<#
+	}
+
 	var mapiCodeMacros = headers
 		.Select(file => GetMapiCodeMacros(file))
 		.Aggregate((first, second) => first.Concat(second))
@@ -272,6 +284,16 @@ int main()
 	private static IEnumerable<string> GetMapiCodeMacros(string file)
 	{
 		var pattern = new Regex(@"^\s*#define\s+([^(\s]+)\s+MAKE_MAPI_[ES]\(.+\)");
+		var path = Path.Combine("./", file);
+		return File.ReadAllLines(path)
+			.Select(line => pattern.Match(line))
+			.Where(match => match.Success)
+			.Select(match => match.Groups[1].Value);
+	}
+
+	private static IEnumerable<string> GetRenamedMapiCodeMacros(string file)
+	{
+		var pattern = new Regex(@"^\s*#define\s+(MAPI_[EW]_[^(\s]+)\s+([ES]_[^()]+)");
 		var path = Path.Combine("./", file);
 		return File.ReadAllLines(path)
 			.Select(line => pattern.Match(line))
