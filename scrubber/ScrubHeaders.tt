@@ -270,7 +270,6 @@ int main()
 			@"PR_USER_SID",
 			@"PR_DOTSTUFF_STATE",
 			@"PR_CONVERSION_STATE",
-			@"PR_HTML",
 		};
 		var pattern = new Regex(@"^\s*#define\s+([^(\s]+)\s+PROP_TAG\(.+,.+\)");
 		var path = Path.Combine("./", file);
@@ -303,12 +302,39 @@ int main()
 
 	private static IEnumerable<string> GetOleGuidMacros(string file)
 	{
-		var pattern = new Regex(@"^\s*DEFINE_OLEGUID\(\s*([^\s,]+),\s*[^\s,]+,\s*[^\s,]+,\s*[^\s)]+\)");
+		var pattern = new Regex(@"^\s*DEFINE_OLEGUID\(\s*([^\s,]+)(,\s*[^\s,]+){3}\)");
 		var path = Path.Combine("./", file);
 		return File.ReadAllLines(path)
 			.Select(line => pattern.Match(line))
 			.Where(match => match.Success)
-			.Select(match => match.Groups[1].Value);
+			.Select(match => match.Groups[1].Value)
+			.Concat(GetDefineGuidMacros(file))
+			.Distinct();
+	}
+
+	private static IEnumerable<string> GetDefineGuidMacros(string file)
+	{
+		var missing = new HashSet<string> {
+			@"CLSID_MimeEdit",
+			@"CMDSETID_MimeEdit",
+			@"CMDSETID_MimeEditHost",
+			@"CLSID_IHashTable",
+			@"CLSID_IFontCache",
+			@"CLSID_IMimeObjResolver",
+			@"IID_IHashTable",
+			@"IID_IMimeObjResolver",
+			@"IID_IFontCache",
+			@"IID_IFontCacheNotify",
+			@"IID_IMimeEditTag",
+			@"IID_IMimeEditTagCollection",
+		};
+		var pattern = new Regex(@"^\s*DEFINE_GUID\(\s*([^\s,]+)(,\s*[^\s,]+){11}\)");
+		var path = Path.Combine("./", file);
+		return File.ReadAllLines(path)
+			.Select(line => pattern.Match(line))
+			.Where(match => match.Success)
+			.Select(match => match.Groups[1].Value)
+			.Where(macro => !missing.Contains(macro));
 	}
 
 	private static IEnumerable<string> GetPropTypeMacros(string file)
